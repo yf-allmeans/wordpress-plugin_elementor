@@ -12,9 +12,6 @@
  * php version 7.3.9
  */
 
-register_activation_hook( __FILE__, 'crudOperationsTable');
-register_activation_hook( __FILE__, 'btnCountOperationsTable');
-
 //database table creation for todolist
 function crudOperationsTable() {
   global $wpdb;
@@ -34,6 +31,7 @@ function crudOperationsTable() {
   }
 }
 
+//database table creation for button counter list
 function btnCountOperationsTable(){
   global $wpdb;
   $charset_collate = $wpdb->get_charset_collate();
@@ -55,3 +53,21 @@ function btnCountOperationsTable(){
     }
 }
 
+//database table creation for button track list
+function btnCountlist(){
+  global $wpdb;
+  $charset_collate = $wpdb->get_charset_collate();
+  $table_name = $wpdb->prefix . 'btn_track_list';
+  $sql = "CREATE TABLE $table_name (
+    `id` int(50) NOT NULL AUTO_INCREMENT,
+    `btn_id` varchar(100) DEFAULT NULL,
+    `base_url`  varchar(100) DEFAULT NULL,
+    `date_added`  datetime,
+    PRIMARY KEY(id)
+  );
+  ";
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+      dbDelta($sql);
+    }
+}

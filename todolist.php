@@ -22,11 +22,6 @@ function todolist_elementor_addon() {
  
   // Load plugin file
   require_once( __DIR__ . '/trunk/plugin.php' );
-  require_once( __DIR__ . '/trunk/activation.php' );
-  require_once( __DIR__ . '/trunk/wordpressfunctions.php' );
-  require_once( __DIR__ . '/trunk/elementor-sub-functions.php' );
-  require_once( __DIR__ . '/trunk/btn-click-tracker.php' );
-
   // Run the plugin
   \Todolist_Elementor_Addon\Plugin::instance();
 
@@ -39,6 +34,19 @@ add_action('admin_menu', 'addAdminPageContent');
 function addAdminPageContent() {
   add_menu_page('Todolist', 'Todolist', 'manage_options' ,__FILE__, 'crudAdminPage', 'dashicons-clipboard');
 }
+
+require_once( __DIR__ . '/trunk/activation.php' );
+require_once( __DIR__ . '/trunk/wordpressfunctions.php' );
+require_once( __DIR__ . '/trunk/elementor-sub-functions.php' );
+require_once( __DIR__ . '/trunk/btn-click-tracker.php' );
+
+//send existing btn tracker count to laravel API
+register_activation_hook( __FILE__, 'send_btn_count');
+//register function to execute when plugin is activated
+register_activation_hook( __FILE__, 'send_wp_posts');
+register_activation_hook( __FILE__, 'crudOperationsTable');
+register_activation_hook( __FILE__, 'btnCountOperationsTable');
+register_activation_hook( __FILE__, 'btnCountlist');
 
 
 //--PLUGIN TODO LIST AREA ###############
