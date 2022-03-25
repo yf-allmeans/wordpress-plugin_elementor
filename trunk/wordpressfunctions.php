@@ -14,8 +14,6 @@
 
  // WORDPRESS POSTS --AREA-- #############
 
- //register function to execute when plugin is activated
-register_activation_hook( __FILE__, 'send_wp_posts');
 //bind action to execute everytime user creates new post also send to laravel
 add_action( 'publish_post', 'new_wp_post', 10, 1 );
 //bind action to execute everytime user deletes post also delete in laravel

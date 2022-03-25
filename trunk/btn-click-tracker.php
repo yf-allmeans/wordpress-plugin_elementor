@@ -24,7 +24,6 @@
 // }
 
 //add_action('admin_menu', 'send_btn_count');
-register_activation_hook( __FILE__, 'send_btn_count');
 add_action( 'wp_ajax_btn_check_click_counter', 'btn_check_click_counter');
 add_action( 'wp_ajax_nopriv_btn_check_click_counter', 'btn_check_click_counter' );
 add_action( 'wp_footer', 'btn_click' );
