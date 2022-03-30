@@ -12,6 +12,9 @@
  * php version 7.3.9
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+    die; // Exit if accessed directly.
+  }
  //--PLUGIN TODO LIST AREA ###############
 //main plugin admin panel function
 function crudAdminPage() {

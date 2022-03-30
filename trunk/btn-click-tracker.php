@@ -14,29 +14,30 @@
 
 //CLICK COUNTER AREA ################
 
-// add_action( 'wp_enqueue_scripts', 'my_enqueue_function' );
-
-// function my_enqueue_function() { 
-//     //Option 1: Manually enqueue the wp-util library.
-//     wp_enqueue_script( 'wp-util' );
-//     // Option 2: Make wp-util a dependency of your script (usually better).
-//     //wp_enqueue_script( 'btn_click', [ 'wp-util' ] );
-// }
+if ( ! defined( 'ABSPATH' ) ) {
+  die; // Exit if accessed directly.
+}
 
 //add_action('admin_menu', 'send_btn_count');
+
+//add ajax function to button check click counter to initialize ajax function upon calls
 add_action( 'wp_ajax_btn_check_click_counter', 'btn_check_click_counter');
 add_action( 'wp_ajax_nopriv_btn_check_click_counter', 'btn_check_click_counter' );
+//add function to wp footer on every page
 add_action( 'wp_footer', 'btn_click' );
 
+//sending current records to laravel api database
 function send_btn_count(){
   global $wpdb;
   $base_url = get_site_url();
   $btn_table = $wpdb->prefix . 'get_btn_count';
+  //post data (conditional factor for truncate)
   $post_data = array(
     'base_url' =>      $base_url,
   );
-  //clear existing counts first
+  //clear existing counts in laravel first to refresh data upon activation
   $data_push_to_api = json_encode($post_data);
+  //execute post
   $truncate = wp_remote_post('https://dashboard.sg-webdesign.net/truncatebtn', array(
     'method' => 'POST',
     'headers' => array(
@@ -44,8 +45,7 @@ function send_btn_count(){
     ),
     'body' => $data_push_to_api,
   )); 
-
-  //get all subs
+  //get all click count in wordpress
   $datasend = array();
   $results = $wpdb->get_results("SELECT * FROM $btn_table ORDER BY ID ASC");
   if($wpdb->num_rows>0){
@@ -79,29 +79,33 @@ function send_btn_count(){
 
 }
 
-
+//btn click counter main function php backend
 function btn_check_click_counter() {
+    //check if post data contains nonce, post id and verify
     if ( isset( $_POST['nonce'] ) &&  isset( $_POST['post_id'] ) && wp_verify_nonce( $_POST['nonce'], 'btn_check_click_counter_' . $_POST['post_id'] )) {
       global $wpdb;
-      $base_url = get_site_url();
-      $btn_id = $_POST['btn_id'];
-      $post_id = $_POST['post_id'];
-      $user_ip = $_POST['user_ip'];
-      $btn_table = $wpdb->prefix . 'get_btn_count';
-      $posts_table = $wpdb->prefix . 'posts';
-      $post_link = $wpdb->get_var("SELECT guid FROM $posts_table WHERE ID='$post_id'");
+      $base_url = get_site_url();   //get url
+      $btn_id = $_POST['btn_id'];   //get button id from post
+      $post_id = $_POST['post_id']; //get post id from post
+      $user_ip = $_POST['user_ip']; //get user ip from post
+      $btn_table = $wpdb->prefix . 'get_btn_count'; //define btn table name
+      $posts_table = $wpdb->prefix . 'posts'; //define posts table name
+      $post_link = $wpdb->get_var("SELECT guid FROM $posts_table WHERE ID='$post_id'"); //get post permalink
+      //check if btn already has record under a user ip
       $existcount = "SELECT * FROM $btn_table 
                                    WHERE btn_id = '$btn_id' AND post_id = '$post_id' AND base_url = '$base_url' AND user_ip = '$user_ip'";
+      //execute
       $existing = $wpdb->get_results($existcount);
+      //update data and add count only if already existing record
       if($existing){
           $update_click_record = $wpdb->get_results("UPDATE $btn_table SET count=count+1
                                    WHERE btn_id = '$btn_id' AND post_id = '$post_id' AND base_url = '$base_url' AND user_ip = '$user_ip'");
-      }
+      }//add new record if not existing
       else{
           $new_click_record = $wpdb->get_results("INSERT INTO $btn_table(btn_id, post_id, base_url, post_link, count, user_ip)
                                                   VALUES('$btn_id','$post_id','$base_url','$post_link',1,'$user_ip')");
       }
-      //set api request config
+      //set api request config to send to laravel api
       $post_data = array(
         'btn_id' => $btn_id,
         'post_id' => $post_id,
@@ -109,9 +113,8 @@ function btn_check_click_counter() {
         'post_link' => $post_link,
         'user_ip' => $user_ip,
       );
-      $data_push_to_api = json_encode($post_data);
-        $data_push_to_api = json_encode($post_data);
-        $url = 'https://dashboard.sg-webdesign.net/savebtn';
+        $data_push_to_api = json_encode($post_data); //encode data
+        $url = 'https://dashboard.sg-webdesign.net/savebtn'; //set api url
         $arguments = array(
           'method' => 'POST',
           'headers' => array(
@@ -122,21 +125,27 @@ function btn_check_click_counter() {
         );
         //execute api request
         $response = wp_remote_post($url, $arguments);
-        //$count = get_post_meta( $_POST['post_id'], 'btn_check_click_counter', true );
-        //update_post_meta( $_POST['post_id'], 'btn_check_click_counter', ( $count === '' ? 1 : $count + 1 ) );
     }
     exit();
 }
 
+//function button click via ajax
 function btn_click() {
-    global $post;
-    $user_ip = $_SERVER['REMOTE_ADDR'];
-    if( isset( $post->ID ) ) {
+    global $post, $wpdb;
+    $user_ip = $_SERVER['REMOTE_ADDR']; //get user up
+    $tbl = $wpdb->prefix . 'btn_track_list'; //define btn table 
+    $tracked_btn = $wpdb->get_col("SELECT btn_id FROM $tbl WHERE status='Activated'"); //check if activated
+    $btn_all = preg_filter('/^/', '#', $tracked_btn); //add # prefix to all records in the array of activated buttons to make them IDs
+    $tracked_final = implode(', ', $btn_all); //separate each array item them with commas
+    //if current page contains post id and activated buttons
+    if( isset( $post->ID ) and $tracked_btn) {
 ?>
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
     <script type="text/javascript" >
+    //click function
     jQuery(function ($) {
-        $( '.elementor-button-wrapper' ).on( 'click', 'a', function() {
+        //execute for all activated buttons
+        $( document ).on( 'click', '<?php echo $tracked_final ?>', function() {
             var href = $( this ).attr( "href" );
             var redirectWindow = window.open(href, '_blank');
             //if the button has no id, get the text of its child element, else get the text of grandchild element
@@ -153,13 +162,13 @@ function btn_click() {
             }
             //set ajax parameters to be passed
             var ajax_options = {
-            action: 'btn_check_click_counter',
-            nonce: '<?php echo wp_create_nonce( 'btn_check_click_counter_' . $post->ID ); ?>',
-            ajaxurl: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
-            post_id: '<?php echo $post->ID; ?>',
-            user_ip: '<?php echo $user_ip; ?>',
-            btn_id: btnid,
-            };
+                action: 'btn_check_click_counter',
+                nonce: '<?php echo wp_create_nonce( 'btn_check_click_counter_' . $post->ID ); ?>',
+                ajaxurl: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+                post_id: '<?php echo $post->ID; ?>',
+                user_ip: '<?php echo $user_ip; ?>',
+                btn_id: btnid,
+                };
             //temporary display
             var oldval = parseInt($('#counterdd').text());
             $('#counterdd').html(oldval+1);
@@ -171,6 +180,6 @@ function btn_click() {
     });
     </script>
 <?php
-    echo "<p id='counterdd'>".get_post_meta($post->ID,'btn_check_click_counter',true)."</p>";
+    //echo "<p id='counterdd'>". $tracked_final ."</p>";
     }
 }
