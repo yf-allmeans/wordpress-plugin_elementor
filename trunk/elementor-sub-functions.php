@@ -12,6 +12,10 @@
  * php version 7.3.9
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+  die; // Exit if accessed directly.
+}
+
 
  // ELEMENTOR SUBMISSIONS --AREA-- #############
 

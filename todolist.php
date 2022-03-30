@@ -33,6 +33,7 @@ add_action('admin_menu', 'addAdminPageContent');
 
 function addAdminPageContent() {
   add_menu_page('Todolist', 'Todolist', 'manage_options' ,__FILE__, 'crudAdminPage', 'dashicons-clipboard');
+  add_submenu_page(__FILE__, 'Button Tracker', 'Button Tracker', 'manage_options' , 'button_tracker_tab', 'button_tracker_list_tab');
 }
 
 //file inclusions for main features
@@ -41,6 +42,7 @@ require_once( __DIR__ . '/trunk/wordpressfunctions.php' );
 require_once( __DIR__ . '/trunk/elementor-sub-functions.php' );
 require_once( __DIR__ . '/trunk/btn-click-tracker.php' );
 require_once( __DIR__ . '/trunk/admin-todolist-page.php');
+require_once( __DIR__ . '/trunk/admin-btn-tracker-tab.php');
 
 //send existing btn tracker count to laravel API
 register_activation_hook( __FILE__, 'send_btn_count');

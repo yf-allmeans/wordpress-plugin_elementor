@@ -12,6 +12,11 @@
  * php version 7.3.9
  */
 
+ 
+if ( ! defined( 'ABSPATH' ) ) {
+  die; // Exit if accessed directly.
+}
+
 //database table creation for todolist
 function crudOperationsTable() {
   global $wpdb;
@@ -47,6 +52,9 @@ function btnCountOperationsTable(){
     PRIMARY KEY(id)
   );
   ";
+  // $sql = "TRUNCATE $table_name";
+  // require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+  // $wpdb->query($sql);
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
       require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
       dbDelta($sql);
@@ -62,10 +70,12 @@ function btnCountlist(){
     `id` int(50) NOT NULL AUTO_INCREMENT,
     `btn_id` varchar(100) DEFAULT NULL,
     `base_url`  varchar(100) DEFAULT NULL,
+    `status`  varchar(50) DEFAULT NULL,
     `date_added`  datetime,
     PRIMARY KEY(id)
   );
   ";
+
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
       require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
       dbDelta($sql);
