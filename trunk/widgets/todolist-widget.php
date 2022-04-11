@@ -13,6 +13,9 @@
  * php version 7.3.9
  */
 
+
+//require_once( plugin_dir_url( __DIR__ ) . '/trunk/license-validation.php');
+//include get_plugin_directory() . "/license-validation.php";
  
 if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly.
@@ -103,6 +106,7 @@ class Todolist_Widget extends \Elementor\Widget_Base {
         global $wpdb;
         $table_name = $wpdb->prefix . 'todo';
         //display for default filter settings
+        if(license_validation()){
         if($settings['filter']=='default'){
         ?>      <h1><?php echo wp_kses( $settings['title'], array() ); ?></h1>
                 <?php 
@@ -241,39 +245,17 @@ class Todolist_Widget extends \Elementor\Widget_Base {
                         ?>
                     </table>
             <?php 
+            }
         }
-    
     }
     protected function _content_template() {
+    if(license_validation()){
         //default filter setting render inline editing attributes
-		if($settings['filter']=='default'){
-?>
- 		<#
-		view.addInlineEditingAttributes( 'title', 'none' );
-        view.addInlineEditingAttributes( 'title2', 'none' );
-		#>
-        <h2 {{{ view.getRenderAttributeString( 'title' ) }}}>{{{ settings.title }}}</h2>
-        <h2 {{{ view.getRenderAttributeString( 'title2' ) }}}>{{{ settings.title2 }}}</h2>
-<?php
-        }
-        //finished task filter setting render inline editing attributes
-        elseif($settings['filter']=='done'){
-?>
-        <#
-        view.addInlineEditingAttributes( 'title2', 'none' );
-		#>
-        <h2 {{{ view.getRenderAttributeString( 'title2' ) }}}>{{{ settings.title2 }}}</h2>
-<?php
-        }
-        //ongoing task filter setting render inline editing attributes
-        elseif($settings['filter']=='ongoing'){
-?>
-        <#
-        view.addInlineEditingAttributes( 'title', 'none' );
-		#>
-        <h2 {{{ view.getRenderAttributeString( 'title' ) }}}>{{{ settings.title }}}</h2>
-<?php
-        }
 
-}
+    }else{//features locked
+?>          
+            <h2><a href="admin.php?page=elementor-todolist%2Ftodolist.php">Please activate your Todolist plugin first.</a></h2>
+<?php
+        }
+    }
 }

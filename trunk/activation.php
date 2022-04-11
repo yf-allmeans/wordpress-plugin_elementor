@@ -124,3 +124,22 @@ function registerDomain(){
       'body' => $data_push_to_api,
     )); 
 }
+
+function laravel_notif_db_tbl(){
+  global $wpdb;
+  $charset_collate = $wpdb->get_charset_collate();
+  $table_name = $wpdb->prefix . 'laravel_data_notif_tbl';
+  $sql = "CREATE TABLE $table_name (
+    `id` int(50) NOT NULL AUTO_INCREMENT,
+    `notification` varchar(100) DEFAULT NULL,
+    `status`  varchar(50) DEFAULT NULL,
+    `date_added`  datetime,
+    PRIMARY KEY(id)
+  );
+  ";
+
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+      dbDelta($sql);
+    }
+}

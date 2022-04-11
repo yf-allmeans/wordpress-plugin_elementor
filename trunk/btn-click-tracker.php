@@ -169,9 +169,7 @@ function btn_click() {
                 user_ip: '<?php echo $user_ip; ?>',
                 btn_id: btnid,
                 };
-            //temporary display
-            var oldval = parseInt($('#counterdd').text());
-            $('#counterdd').html(oldval+1);
+
             $.post( ajax_options.ajaxurl, ajax_options, function() {
                 redirectWindow.location;
             });

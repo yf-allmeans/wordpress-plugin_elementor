@@ -54,9 +54,14 @@ function license_credentials_page(){
                     <script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>
                     ";
             //else return invalid
-            }else{
+            }elseif($result == "Invalid Key"){
                 echo "
                     <script>alert('Please enter a valid license key!');</script>
+                    <script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>
+                    ";
+            }else{
+              echo "
+                    <script>alert('This wordpress site is disabled! Please contact your administrator!');</script>
                     <script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>
                     ";
             }
