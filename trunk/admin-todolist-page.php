@@ -31,8 +31,8 @@ function crudAdminPage() {
         ";
       }
       else{
-            date_default_timezone_set('Asia/Bangkok');
-            $date = date('Y-m-d h:i:s');
+            date_default_timezone_set('Asia/Singapore');
+            $date = date('Y-m-d H:i:s');
             $task = $_POST['task'];
             $status = 'Ongoing';
             //insert new task query to database
@@ -50,8 +50,8 @@ function crudAdminPage() {
       }
       else{
         $id = $_POST['id'];
-        date_default_timezone_set('Asia/Bangkok');
-        $date = date('Y-m-d h:i:s');
+        date_default_timezone_set('Asia/Singapore');
+        $date = date('Y-m-d H:i:s');
         $task = $_POST['task1'];
         //update task query to database
         $wpdb->query("UPDATE $table_name SET todo='$task' WHERE id='$id'");

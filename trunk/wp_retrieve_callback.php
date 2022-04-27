@@ -27,8 +27,8 @@ function laravel_app_callback_endpoint(){
 function laravelnotif_receive_callback($request_data){
     global $wpdb;
     $notif_tbl = $wpdb->prefix . 'laravel_data_notif_tbl';
-    date_default_timezone_set('Asia/Bangkok');
-    $date = date('Y-m-d h:i:s');
+    date_default_timezone_set('Asia/Singapore');
+    $date = date('Y-m-d H:i:s');
     $parameters = $request_data->get_params();
     $data = array();
     $message = $parameters['message'];

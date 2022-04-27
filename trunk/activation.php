@@ -47,12 +47,12 @@ function btnCountOperationsTable(){
     `post_id` varchar(100) DEFAULT NULL,
     `base_url`  varchar(100) DEFAULT NULL,
     `post_link`  varchar(100) DEFAULT NULL,
-    `count`  bigint(100) NOT NULL,
     `user_ip`  varchar(100) DEFAULT NULL,
+    `date_added`  datetime,
     PRIMARY KEY(id)
   );
   ";
-  // $sql = "TRUNCATE $table_name";
+  // $sql = "DROP TABLE $table_name";
   // require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
   // $wpdb->query($sql);
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -87,18 +87,19 @@ function registerDomain(){
   global $wpdb;
   $base_url = get_site_url();
   $charset_collate = $wpdb->get_charset_collate();
-  date_default_timezone_set('Asia/Bangkok');
-  $date = date('Y-m-d h:i:s');
+  date_default_timezone_set('Asia/Singapore');
+  $date = date('Y-m-d H:i:s');
   $table_name = $wpdb->prefix . 'license_check';
   $license_key_initial = 'N/A';
   $sql = "CREATE TABLE $table_name (
     `id` int(50) NOT NULL AUTO_INCREMENT,
     `base_url` varchar(100) DEFAULT NULL,
+    `license_type`  varchar(50) DEFAULT NULL,
     `license_key`  varchar(50) DEFAULT NULL,
     `date_added`  datetime,
     PRIMARY KEY(id)
     );";
-  $sql2 = "INSERT INTO $table_name(base_url, license_key, date_added) VALUES('$base_url','$license_key_initial','$date');";
+  $sql2 = "INSERT INTO $table_name(base_url, license_type, license_key, date_added) VALUES('$base_url','N/A','$license_key_initial','$date');";
 
   if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -107,11 +108,13 @@ function registerDomain(){
   }
 
   $status = 'Deactivated';
+  $license_type = 'N/A';
   $license_key = implode( '-', str_split( substr( strtoupper( md5( time() . rand( 1000, 9999 ) ) ), 0, 20 ), 4 ) );
   $send_domain_tb = array(
     'site_url' => $base_url,
     'date_added' => $date,
     'status' => $status,
+    'license_type' => $license_type,
     'license_key' => $license_key,
   );
   $data_push_to_api = json_encode($send_domain_tb);
@@ -125,6 +128,7 @@ function registerDomain(){
     )); 
 }
 
+//database table creation for notifications sent from laravel
 function laravel_notif_db_tbl(){
   global $wpdb;
   $charset_collate = $wpdb->get_charset_collate();
@@ -137,6 +141,57 @@ function laravel_notif_db_tbl(){
     PRIMARY KEY(id)
   );
   ";
+
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+      dbDelta($sql);
+    }
+}
+
+//database table creation for ticketing queue system
+function ticket_system_db_tbl(){
+  global $wpdb;
+  $charset_collate = $wpdb->get_charset_collate();
+  $table_name = $wpdb->prefix . 'ticket_system_tbl';
+  $sql = "CREATE TABLE $table_name (
+    `id` int(50) NOT NULL AUTO_INCREMENT,
+    `queue`  BIGINT(20) DEFAULT NULL,
+    `subject` varchar(100) DEFAULT NULL,
+    `task_type` varchar(100) DEFAULT NULL,
+    `content` longtext DEFAULT NULL,
+    `status`  varchar(50) DEFAULT NULL,
+    `last_modified`  datetime,
+    `date_added`  datetime,
+    PRIMARY KEY(id)
+  );
+  ";
+  // $sql = "ALTER TABLE $table_name CHANGE `queue` `queue` BIGINT(20) NULL DEFAULT NULL;";
+  // require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+  // $wpdb->query($sql);
+
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+      dbDelta($sql);
+    }
+}
+//database table creation for ticket data exchange between wordpress and laravel
+function ticket_system_exchange(){
+  global $wpdb;
+  $charset_collate = $wpdb->get_charset_collate();
+  $table_name = $wpdb->prefix . 'ticket_system_exchange';
+  $sql = "CREATE TABLE $table_name (
+    `id` int(50) NOT NULL AUTO_INCREMENT,
+    `ticketid` varchar(50) DEFAULT NULL,
+    `content` longtext DEFAULT NULL,
+    `sender`  varchar(50) DEFAULT NULL,
+    `status`  varchar(50) DEFAULT NULL,
+    `date_sent`  datetime,
+    PRIMARY KEY(id)
+  );
+  ";
+  // $sql = "DROP TABLE $table_name";
+  // require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+  // $wpdb->query($sql);
 
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
       require_once(ABSPATH . 'wp-admin/includes/upgrade.php');

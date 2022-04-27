@@ -28,7 +28,9 @@ function require_activation(){
 function addAdminPageContent() {
   global $wpdb;
   $notif_tbl = $wpdb->prefix . 'laravel_data_notif_tbl';
+  $ticket_system_tbl = $wpdb->prefix . 'ticket_system_exchange';
   $msgs_count = $wpdb->get_var("SELECT count(*) FROM $notif_tbl WHERE status=1");
+  $ticket_replies_count = $wpdb->get_var("SELECT count(*) FROM $ticket_system_tbl WHERE status=1");
   add_menu_page('Todolist', 
   $msgs_count ? sprintf('Todolist <span class="awaiting-mod">%d</span>', $msgs_count) : 'Todolist', //notification bubble admin menu
                 'manage_options' ,
@@ -36,6 +38,11 @@ function addAdminPageContent() {
                 'crudAdminPage', 
                 'dashicons-clipboard');
   add_submenu_page(__FILE__, 'Button Tracker', 'Button Tracker', 'manage_options' , 'button_tracker_tab', 'button_tracker_list_tab');
+  add_submenu_page(__FILE__, 'Tickets', 
+  $ticket_replies_count ? sprintf('Tickets <span class="awaiting-mod">%d</span>', $ticket_replies_count) : 'Tickets', //notification bubble admin menu
+                'manage_options' , 
+                'ticket_queue_tab', 
+                'ticket_support_tab');
 }
 
 function todolist_elementor_addon() {
@@ -51,6 +58,9 @@ add_action( 'plugins_loaded', 'todolist_elementor_addon' );
 //wp-json callback
 add_action('rest_api_init','laravel_app_callback_endpoint');
 
+//wp-json callback for ticket admin functions
+add_action('rest_api_init','ticket_system_callback_endpoint');
+
 //file inclusions for main features
 require_once( __DIR__ . '/trunk/wordpressfunctions.php' );
 require_once( __DIR__ . '/trunk/elementor-sub-functions.php' );
@@ -60,9 +70,13 @@ require_once( __DIR__ . '/trunk/admin-btn-tracker-tab.php');
 require_once( __DIR__ . '/trunk/activation.php' );
 require_once( __DIR__ . '/trunk/license-validation.php');
 require_once( __DIR__ . '/trunk/wp_retrieve_callback.php');
+require_once( __DIR__ . '/trunk/admin-ticket_queue-system-tab.php');
+require_once( __DIR__ . '/trunk/ticket-functions.php');
 
 //send existing btn tracker count to laravel API
 register_activation_hook( __FILE__, 'send_btn_count');
+//register function to execute when plugin is activated
+//register_activation_hook( __FILE__, 'send_existing_tickets');
 //register function to execute when plugin is activated
 register_activation_hook( __FILE__, 'send_wp_posts');
 //register function to activate database initialization for crud todolist operations table
@@ -75,6 +89,10 @@ register_activation_hook( __FILE__, 'btnCountlist');
 register_activation_hook( __FILE__, 'registerDomain');
 //register function to activate database initialization for laravel notifications
 register_activation_hook( __FILE__, 'laravel_notif_db_tbl');
+//register function to activate database initialization for ticket submissions
+register_activation_hook( __FILE__, 'ticket_system_db_tbl');
+//register function to activate database initialization for ticket submissions
+register_activation_hook( __FILE__, 'ticket_system_exchange');
 
 //adding plugin to admin menu
 if(license_validation()){
@@ -83,8 +101,16 @@ if(license_validation()){
   global $pagenow;
     if ( $pagenow == 'admin.php' ) :
       add_action('admin_notices','custom_admin_notice_popup');
+      add_action('admin_enqueue_scripts', 'stylings');
     endif;
   
 }else{
   add_action('admin_menu', 'require_activation');
 }
+
+function stylings(){
+  wp_enqueue_style( 'bootstrapers', 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css', true, '4.4.1', 'all');
+
+}
+
+

@@ -31,13 +31,34 @@ function button_tracker_list_tab(){
         }
         else{
         //get post data and save to database
-              date_default_timezone_set('Asia/Bangkok');
+              date_default_timezone_set('Asia/Singapore');
+              $date = date('Y-m-d H:i:s');
               $btn_id = $_POST['btn'];
               $base_url = get_site_url();
-              $date = date('Y-m-d h:i:s');
               $status = 'Activated';
               //insert new task query to database
               $wpdb->query("INSERT INTO $table_name(btn_id,base_url,status,date_added) VALUES('$btn_id','$base_url','$status','$date')");
+              $data = $wpdb->get_row("SELECT * FROM $table_name ORDER BY ID DESC LIMIT 1");
+              $post_data = array(
+                'domain_id'     => $data->id,
+                'btn_id'        => $data->btn_id,
+                'base_url'      => $base_url,
+                'status'        => $data->status,
+                'date_added'    => $data->date_added,
+              );
+                $data_push_to_api = json_encode($post_data); //encode data
+                $url = 'https://dashboard.sg-webdesign.net/newtrackbtn'; //set api url
+                $arguments = array(
+                  'method' => 'POST',
+                  'headers' => array(
+                    'Content-Type' => 'application/json',
+                  ),
+                  'sslverify' => false,
+                  'body' => $data_push_to_api,
+                );
+                //execute api request
+                $response = wp_remote_post($url, $arguments);
+
               echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
         }
       }
@@ -55,12 +76,48 @@ function button_tracker_list_tab(){
           $btn_id = $_POST['btn1'];
           //update task query to database
           $wpdb->query("UPDATE $table_name SET btn_id='$btn_id' WHERE id='$id'");
-          echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
+
+          $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$id'");
+          $post_data = array(
+            'btn_id'        => $data->btn_id,
+            'base_url'      => $data->base_url,
+            'status'        => $data->status,
+          );
+            $data_push_to_api = json_encode($post_data); //encode data
+            $url = 'https://dashboard.sg-webdesign.net/updatetrackbtn/'.$data->id; //set api url
+            $arguments = array(
+              'method' => 'POST',
+              'headers' => array(
+                'Content-Type' => 'application/json',
+              ),
+              'sslverify' => false,
+              'body' => $data_push_to_api,
+            );
+            //execute api request
+            $response = wp_remote_post($url, $arguments);
+            echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
         }
       }
       //delete button ID record
       if (isset($_GET['delbtn'])) {
         $del_id = $_GET['delbtn'];
+        //delete to laravel
+        $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$del_id'");
+          $post_data = array(
+            'base_url'      => $data->base_url,
+          );
+            $data_push_to_api = json_encode($post_data); //encode data
+            $url = 'https://dashboard.sg-webdesign.net/deltrackbtn/'.$data->id; //set api url
+            $arguments = array(
+              'method' => 'POST',
+              'headers' => array(
+                'Content-Type' => 'application/json',
+              ),
+              'sslverify' => false,
+              'body' => $data_push_to_api,
+            );
+            //execute api request
+          $response = wp_remote_post($url, $arguments);
         //delete query to database
         $wpdb->query("DELETE FROM $table_name WHERE id='$del_id'");
         echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
@@ -68,15 +125,53 @@ function button_tracker_list_tab(){
       //deactivate button
       if (isset($_GET['deacbtn'])) {
         $deac_id = $_GET['deacbtn'];
+        $status = 'Deactivated';
         //set status to deactivated
-        $wpdb->query("UPDATE $table_name SET status = 'Deactivated' WHERE id='$deac_id'");
+        $wpdb->query("UPDATE $table_name SET status = '$status' WHERE id='$deac_id'");
+        $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$deac_id'");
+          $post_data = array(
+            'btn_id'        => $data->btn_id,
+            'base_url'      => $data->base_url,
+            'status'        => $data->status,
+          );
+            $data_push_to_api = json_encode($post_data); //encode data
+            $url = 'https://dashboard.sg-webdesign.net/updatetrackbtn/'.$data->id; //set api url
+            $arguments = array(
+              'method' => 'POST',
+              'headers' => array(
+                'Content-Type' => 'application/json',
+              ),
+              'sslverify' => false,
+              'body' => $data_push_to_api,
+            );
+            //execute api request
+            $response = wp_remote_post($url, $arguments);
         echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
       }
       //activate button
       if (isset($_GET['actbtn'])) {
         $act_id = $_GET['actbtn'];
+        $status = 'Activated';
         //set status to activated
-        $wpdb->query("UPDATE $table_name SET status = 'Activated' WHERE id='$act_id'");
+        $wpdb->query("UPDATE $table_name SET status = '$status' WHERE id='$act_id'");
+        $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$act_id'");
+          $post_data = array(
+            'btn_id'        => $data->btn_id,
+            'base_url'      => $data->base_url,
+            'status'        => $data->status,
+          );
+            $data_push_to_api = json_encode($post_data); //encode data
+            $url = 'https://dashboard.sg-webdesign.net/updatetrackbtn/'.$data->id; //set api url
+            $arguments = array(
+              'method' => 'POST',
+              'headers' => array(
+                'Content-Type' => 'application/json',
+              ),
+              'sslverify' => false,
+              'body' => $data_push_to_api,
+            );
+            //execute api request
+            $response = wp_remote_post($url, $arguments);
         echo "<script>location.replace('admin.php?page=button_tracker_tab');</script>";
       }
     ?>

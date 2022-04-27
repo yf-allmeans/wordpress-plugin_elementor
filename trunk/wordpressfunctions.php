@@ -49,8 +49,8 @@ function send_wp_posts() {
       )); 
     $datasend = array();
     //get all posts
-    $results =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, u.user_email 
-                                    FROM $post_tb p INNER JOIN $user_tb u ON p.post_author = u.ID WHERE p.post_type='post' ORDER BY ID ASC");
+    $results =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, p.post_title, u.user_email 
+                                    FROM $post_tb p INNER JOIN $user_tb u ON p.post_author = u.ID WHERE p.post_type='post' AND p.post_status='publish' ORDER BY ID ASC");
     //api call
     if($wpdb->num_rows>0){
       foreach($results as $result){
@@ -59,6 +59,7 @@ function send_wp_posts() {
             'user_email'=>     $result->user_email,
             'base_url'=>       $base_url,
             'post_id' =>       $result->ID,
+            'post_title' =>    $result->post_title,
             'post_link' =>     $result->guid,
             'post_modified' => $result->post_modified
           ];
@@ -103,7 +104,7 @@ function new_wp_post($post_id){
     // $current_user = get_current_user_id();
     // $userinfo = get_userdata($current_user);
     // $user_email = $userinfo->user_email;
-    $posts =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, u.user_email 
+    $posts =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, p.post_title, u.user_email 
     FROM $post_tb p INNER JOIN $user_tb u ON p.post_author = u.ID WHERE p.post_type='post' AND p.ID = $post_id ORDER BY ID ASC");
     //set post details
     if($wpdb->num_rows>0){
@@ -113,6 +114,7 @@ function new_wp_post($post_id){
             'user_email'=>     $post->user_email,
             'base_url'=>       $base_url,
             'post_id' =>       $post->ID,
+            'post_title' =>    $post->post_title,
             'post_link' =>     $post->guid,
             'post_modified' => $post->post_modified
           ];
@@ -162,8 +164,8 @@ function update_wp_post($post_id){
   $post_tb = $wpdb->posts;
   $user_tb = $wpdb->prefix . 'users';
   $base_url = get_site_url();
-  $posts =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, u.user_email 
-  FROM $post_tb p INNER JOIN $user_tb u ON p.post_author = u.ID WHERE p.post_type='post' AND p.ID = $post_id ORDER BY ID ASC");
+  $posts =  $wpdb->get_results("SELECT p.post_author, p.ID, p.guid, p.post_modified, p.post_title, u.user_email 
+  FROM $post_tb p INNER JOIN $user_tb u ON p.post_author = u.ID WHERE p.post_type='post' AND p.ID = $post_id AND p.post_status='publish' ORDER BY ID ASC");
   //set post details
   if($wpdb->num_rows>0){
     foreach($posts as $post){
@@ -172,6 +174,7 @@ function update_wp_post($post_id){
           'user_email'=>     $post->user_email,
           'base_url'=>       $base_url,
           'post_id' =>       $post->ID,
+          'post_title' =>    $post->post_title,
           'post_link' =>     $post->guid,
           'post_modified' => $post->post_modified
         ];

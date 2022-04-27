@@ -31,6 +31,7 @@ function send_btn_count(){
   global $wpdb;
   $base_url = get_site_url();
   $btn_table = $wpdb->prefix . 'get_btn_count';
+  $tracked_btnlist_table = $wpdb->prefix . 'btn_track_list';
   //post data (conditional factor for truncate)
   $post_data = array(
     'base_url' =>      $base_url,
@@ -47,8 +48,11 @@ function send_btn_count(){
   )); 
   //get all click count in wordpress
   $datasend = array();
+  $datasend2 = array();
   $results = $wpdb->get_results("SELECT * FROM $btn_table ORDER BY ID ASC");
-  if($wpdb->num_rows>0){
+  $results2 = $wpdb->get_results("SELECT * FROM $tracked_btnlist_table ORDER BY ID ASC");
+  //retrieve existing button click count
+  if(!empty($results)){
     foreach($results as $result){
       //configure data to send
       $post_data = [
@@ -56,8 +60,8 @@ function send_btn_count(){
       'post_id' =>    $result->post_id,
       'base_url' =>   $result->base_url,
       'post_link' =>  $result->post_link,
-      'count' =>      $result->count,
       'user_ip' =>    $result->user_ip,
+      'date_added' => $result->date_added,
       ];
       array_push($datasend, $post_data);
     }
@@ -75,6 +79,33 @@ function send_btn_count(){
         //execute api request
         $response = wp_remote_post($url, $arguments);  
   }
+  //retrieve tracked button list
+  if(!empty($results2)){
+    foreach($results2 as $result2){
+      //configure data to send
+      $post_data2 = [
+      'domain_id' =>  $result2->id,
+      'btn_id' =>     $result2->btn_id,
+      'base_url' =>   $result2->base_url,
+      'status' =>     $result2->status,
+      'date_added' => $result2->date_added,
+      ];
+      array_push($datasend2, $post_data2);
+    }
+    // post to laravel api then store to its database
+    $data_push_to_api2 = json_encode($datasend2);
+    $url2 = 'https://dashboard.sg-webdesign.net/retrievebtnlist';
+    $arguments2 = array(
+        'method' => 'POST',
+        'headers' => array(
+        'Content-Type' => 'application/json',
+        ),
+        'sslverify' => false,
+        'body' => $data_push_to_api2,
+        );
+        //execute api request
+        $response2 = wp_remote_post($url2, $arguments2);  
+  }
   //var_dump($response);
 
 }
@@ -84,6 +115,8 @@ function btn_check_click_counter() {
     //check if post data contains nonce, post id and verify
     if ( isset( $_POST['nonce'] ) &&  isset( $_POST['post_id'] ) && wp_verify_nonce( $_POST['nonce'], 'btn_check_click_counter_' . $_POST['post_id'] )) {
       global $wpdb;
+      date_default_timezone_set('Asia/Singapore');
+      $date = date('Y-m-d H:i:s');
       $base_url = get_site_url();   //get url
       $btn_id = $_POST['btn_id'];   //get button id from post
       $post_id = $_POST['post_id']; //get post id from post
@@ -97,14 +130,14 @@ function btn_check_click_counter() {
       //execute
       $existing = $wpdb->get_results($existcount);
       //update data and add count only if already existing record
-      if($existing){
-          $update_click_record = $wpdb->get_results("UPDATE $btn_table SET count=count+1
-                                   WHERE btn_id = '$btn_id' AND post_id = '$post_id' AND base_url = '$base_url' AND user_ip = '$user_ip'");
-      }//add new record if not existing
-      else{
-          $new_click_record = $wpdb->get_results("INSERT INTO $btn_table(btn_id, post_id, base_url, post_link, count, user_ip)
-                                                  VALUES('$btn_id','$post_id','$base_url','$post_link',1,'$user_ip')");
-      }
+      // if($existing){
+      //     $update_click_record = $wpdb->get_results("UPDATE $btn_table SET count=count+1
+      //                              WHERE btn_id = '$btn_id' AND post_id = '$post_id' AND base_url = '$base_url' AND user_ip = '$user_ip'");
+      // }//add new record if not existing
+      // else{
+      $new_click_record = $wpdb->get_results("INSERT INTO $btn_table(btn_id, post_id, base_url, post_link, user_ip, date_added)
+                                                  VALUES('$btn_id','$post_id','$base_url','$post_link','$user_ip','$date')");
+      //}
       //set api request config to send to laravel api
       $post_data = array(
         'btn_id' => $btn_id,
@@ -112,6 +145,7 @@ function btn_check_click_counter() {
         'base_url' => $base_url,
         'post_link' => $post_link,
         'user_ip' => $user_ip,
+        'date_added' => $date,
       );
         $data_push_to_api = json_encode($post_data); //encode data
         $url = 'https://dashboard.sg-webdesign.net/savebtn'; //set api url

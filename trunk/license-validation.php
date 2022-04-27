@@ -48,7 +48,7 @@ function license_credentials_page(){
             $result = wp_remote_retrieve_body($send_license); //get response
             //if reponse is succesful save license key and activate plugin
             if($result == "Successful"){
-                $wpdb->query("UPDATE $license_tbl SET license_key='$license_key' WHERE id=1");
+                $wpdb->query("UPDATE $license_tbl SET license_type='Regular', license_key='$license_key' WHERE id=1");
                 echo "
                     <script>alert('Thank you for your patronage!');</script>
                     <script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>
@@ -102,7 +102,7 @@ function license_validation(){
               'sslverify' => false,
               'body' => $data_push_to_api,
             ));
-        $result = wp_remote_retrieve_body($send_license); // execute api request
+        $result = wp_remote_retrieve_body($send_license); // get api request response
         if($result=="Activated"){
              return true;
         }else{
