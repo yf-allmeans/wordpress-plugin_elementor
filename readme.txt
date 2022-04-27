@@ -55,6 +55,11 @@ This section describes how to install the plugin and get it working.
 *Tracking New Button*
 * Head to the todo list section from the left menu bar and click the `Button Tracker` under its submenu
 * On the top section, you can track new button by entering the Button ID
+    1. To get the Button ID, go to your wordpress page
+    2. Right click the button you want to track
+    3. Click inspect
+    4. Skim through the code and locate for its ID
+    5. Copy the Button ID
 * To save it, click on the `Insert` button
 
 *Updating Button Information*
