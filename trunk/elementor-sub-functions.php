@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -18,9 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
  // ELEMENTOR SUBMISSIONS --AREA-- #############
-
-//register function to execute when plugin is activated
-register_activation_hook( __FILE__, 'send_submissions');
 //bind action to form submission via elementor
 add_action( 'elementor_pro/forms/new_record', 'new_subs', 10, 2);
 
@@ -44,28 +41,51 @@ function send_submissions() {
       'body' => $data_push_to_api,
     )); 
     $datasend = array();
+    $datasend2 = array();
     //get all subs
-    $results =  $wpdb->get_results("SELECT s.id, s.post_id, s.referer, s.created_at, s.user_id, v.value as user_email FROM $subs_db s 
-                                    INNER JOIN $subval_db v ON s.id = v.submission_id 
-                                    WHERE v.key = 'email'
+    $results =  $wpdb->get_results("SELECT id, 
+                                           post_id, 
+                                           referer, 
+                                           referer_title, 
+                                           form_name, 
+                                           created_at, 
+                                           user_ip, 
+                                           user_agent FROM $subs_db
                                     ORDER BY ID ASC");
-    //api call
-    if($wpdb->num_rows>0){
+    $results2 = $wpdb->get_results("SELECT * FROM $subval_db ORDER BY ID ASC");
+    //set data retrieval fields
+    if(!empty($results)){
       foreach($results as $result){
           $post_data = [
-            'user_id' => $result->user_id,
-            'user_email' => $result->user_email,
-            'base_url' => $base_url,
-            'sub_id' => $result->id,
-            'post_id' => $result->post_id,
-            'ref_link' => $result->referer,
-            'date_received' => $result->created_at
+            'sub_id'        => $result->id,
+            'post_id'       => $result->post_id,
+            'base_url'      => $base_url,
+            'ref_link'      => $result->referer,
+            'ref_title'     => $result->referer_title,
+            'form_name'     => $result->form_name,
+            'date_received' => $result->created_at,
+            'user_ip'       => $result->user_ip,
+            'user_agent'    => $result->user_agent
           ];
           array_push($datasend, $post_data);
       }
+      if(!empty($results2)){
+        foreach($results2 as $res){
+          $sub_values = [
+            'submission_id' => $res->submission_id,
+            'base_url'      => $base_url,
+            'vkey'          => $res->key,
+            'value'         => $res->value
+          ];
+          array_push($datasend2, $sub_values);
+        }
+      }
       // post to laravel api then store to its database
-      $data_push_to_api = json_encode($datasend);
+      $data_push_to_api = json_encode($datasend); //sub record
+      $data_push_to_api2 = json_encode($datasend2); //sub form values
       $url = 'https://dashboard.sg-webdesign.net/retrievesubs';
+      $url2 = 'https://dashboard.sg-webdesign.net/savesubvalues';
+      //send wp remote post for sub main record
       $arguments = array(
           'method' => 'POST',
           'headers' => array(
@@ -74,8 +94,19 @@ function send_submissions() {
           'sslverify' => false,
           'body' => $data_push_to_api,
           );
-          //execute api request
-          $response = wp_remote_post($url, $arguments);   
+      //execute api request
+      $response = wp_remote_post($url, $arguments);
+      //send wp remote post for sub form values
+      $arguments2 = array(
+            'method' => 'POST',
+            'headers' => array(
+            'Content-Type' => 'application/json',
+            ),
+            'sslverify' => false,
+            'body' => $data_push_to_api2,
+            );
+      //execute api request
+      $response2 = wp_remote_post($url2, $arguments2);     
     }
 	//var_dump($truncate);
   }
@@ -89,25 +120,47 @@ function send_submissions() {
     // $current_user = get_current_user_id();
     // $userinfo = get_userdata($current_user);
     // $user_email = $userinfo->user_email;
-    $results =  $wpdb->get_results("SELECT s.id, s.post_id, s.referer, s.created_at, s.user_id, v.value as user_email FROM $subs_db s 
-                                    INNER JOIN $subval_db v ON s.id = v.submission_id 
-                                    WHERE v.key = 'email'
-                                    ORDER BY ID DESC LIMIT 1");
+    $results =  $wpdb->get_row("SELECT id, 
+                                       post_id, 
+                                       referer, 
+                                       referer_title, 
+                                       form_name, 
+                                       created_at, 
+                                       user_ip, 
+                                       user_agent FROM $subs_db
+                                ORDER BY ID DESC LIMIT 1");
+    $results2 = $wpdb->get_results("SELECT * FROM $subval_db WHERE submission_id='$results->id'"); 
     //set fetched db elementor submission data
-      foreach($results as $res){
       $post_data = array(
-        'user_id' =>       $res->user_id,
-        'user_email' =>    $res->user_email,
-        'base_url' =>      $base_url,
-        'sub_id' =>        $res->id,
-        'post_id' =>       $res->post_id,
-        'ref_link' =>      $res->referer,
-        'date_received' => $res->created_at
+        'sub_id'        => $results->id,
+        'post_id'       => $results->post_id,
+        'base_url'      => $base_url,
+        'ref_link'      => $results->referer,
+        'ref_title'     => $results->referer_title,
+        'form_name'     => $results->form_name,
+        'date_received' => $results->created_at,
+        'user_ip'       => $results->user_ip,
+        'user_agent'    => $results->user_agent
       );
-    }
+
+    //set fetched db elementor submission values
+    $datasend = array();
+      if(!empty($results2)){
+        foreach($results2 as $res){
+          $sub_values = [
+            'submission_id' => $res->submission_id,
+            'base_url'      => $base_url,
+            'vkey'          => $res->key,
+            'value'         => $res->value
+          ];
+          array_push($datasend, $sub_values);
+        }
+      }
     //set api request config
     $data_push_to_api = json_encode($post_data);
+    $data_push_to_api2 = json_encode($datasend);
     $url = 'https://dashboard.sg-webdesign.net/savesub';
+    $url2 = 'https://dashboard.sg-webdesign.net/savesubvalues';
     $arguments = array(
       'method' => 'POST',
       'headers' => array(
@@ -118,5 +171,16 @@ function send_submissions() {
     );
     //execute api request
     $response = wp_remote_post($url, $arguments);
+    //execute api request for sub values
+    $arguments2 = array(
+      'method' => 'POST',
+      'headers' => array(
+        'Content-Type' => 'application/json',
+      ),
+      'sslverify' => false,
+      'body' => $data_push_to_api2,
+    );
+    //execute api request
+    $response2 = wp_remote_post($url2, $arguments2);
 	//var_dump($response);
   }

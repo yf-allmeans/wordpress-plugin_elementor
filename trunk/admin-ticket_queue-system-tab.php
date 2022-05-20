@@ -1,9 +1,9 @@
 <?php 
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -26,21 +26,9 @@ function ticket_support_tab(){
   //get the current queue from laravel
   $active_ticket_check = $wpdb->get_var("SELECT count(*) FROM $table_name WHERE status<>'Closed'");
   $get_license_type = $wpdb->get_var("SELECT license_type FROM $license_tbl WHERE id = 1"); //get license type
-  $send_license_data = [
-    'license_type' =>  $get_license_type,
-  ];
-  $send_to_api = json_encode($send_license_data); //json encode
-  $current_queue_url = 'https://dashboard.sg-webdesign.net/ticketcurrentqueue'; //set api url
-  $current_queue_arguments = array(
-    'method' => 'POST',
-    'headers' => array(
-      'Content-Type' => 'application/json',
-    ),
-    'sslverify' => false,
-    'body' => $send_to_api,
-  );
-  $currentqueue = wp_remote_post($current_queue_url, $current_queue_arguments); //execute API request
-  $next_in_queue = wp_remote_retrieve_body($currentqueue); //get response from laravel
+  $current_queue_url = 'https://dashboard.sg-webdesign.net/ticketcurrentqueue/'.$get_license_type; //set api url
+  $currentqueue = wp_remote_get($current_queue_url); //execute API request
+  $next_in_queue = intval(wp_remote_retrieve_body($currentqueue)); //get response from laravel
   //main view dashboard
   if(!isset($_GET['viewticket']) && !isset($_GET['newticket']) && !isset($_GET['editticket'])){
   ?>
@@ -57,10 +45,12 @@ function ticket_support_tab(){
               </div>
           </div>
 <?php     if($active_ticket_check!=0){  ?>
-            <ul class="list-group list-group-horizontal">
-                <li class="list-group-item">Now Serving: #<?php echo $next_in_queue ?></li>
-                <li class="list-group-item">Next in Queue: #<?php echo $next_in_queue+1 ?></li>
-            </ul>
+              <div id="currentqueue">
+                <ul class="list-group list-group-horizontal">
+                    <li id="nowserving" class="list-group-item">Now Serving: #<?php echo $next_in_queue ?></li>
+                    <li id="nextserving" class="list-group-item">Next in Queue: #<?php echo $next_in_queue+1 ?></li>
+                </ul>
+              </div>
 <?php      }                            ?>
       <table class="table table-bordered">
           <thead>
@@ -447,3 +437,47 @@ function ticket_support_tab(){
   }//delexchange -- delete comment from wordpress and laravel
 
 } // function
+
+
+//add ajax function to button check click counter to initialize ajax function upon calls
+add_action( 'wp_ajax_refreshqueue', 'refreshqueue');
+add_action( 'wp_ajax_nopriv_refreshqueue', 'refreshqueue' );
+//add function to admi menu on every page
+add_action( 'in_admin_footer', 'queueRefresh' );
+
+function refreshqueue(){
+  global $wpdb;
+  $license_tbl = $wpdb->prefix . 'license_check';
+  $get_license_type = $wpdb->get_var("SELECT license_type FROM $license_tbl WHERE id = 1"); //get license type
+  $current_queue_url = 'https://dashboard.sg-webdesign.net/ticketcurrentqueue/'.$get_license_type; //set api url
+  $currentqueue = wp_remote_get($current_queue_url); //execute API request
+  $next_in_queue = intval(wp_remote_retrieve_body($currentqueue)); //get response from laravel
+  echo $next_in_queue;
+  die();
+}
+
+function queueRefresh() {
+?>
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script type="text/javascript" >
+    setInterval(function(){ 
+        jQuery(function ($) {
+          $( document ).ready(function() {
+              $.ajax({
+                  url: ajaxurl,
+                  data: {
+                        'action' : 'refreshqueue',
+                        },
+                  success: function(res) {
+                    var curqueue = parseInt(res);
+                    var nextqueue = curqueue+1;
+                    $("#nowserving").html("Now Serving: #" + curqueue);
+                    $("#nextserving").html("Next in Queue: #" + nextqueue);
+                  }
+              });
+          });
+        });
+      }, 2000);
+  </script>
+<?php
+}

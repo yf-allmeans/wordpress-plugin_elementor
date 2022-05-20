@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -15,12 +15,14 @@
 if ( ! defined( 'ABSPATH' ) ) {
     die; // Exit if accessed directly.
   }
+  
  //--PLUGIN TODO LIST AREA ###############
 //main plugin admin panel function
 function crudAdminPage() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'todo';
-  
+    $base_url = get_site_url();
+    date_default_timezone_set('Asia/Singapore');
   //new task
     if (isset($_POST['newsubmit'])) {
       //empty input user validation
@@ -31,12 +33,32 @@ function crudAdminPage() {
         ";
       }
       else{
-            date_default_timezone_set('Asia/Singapore');
             $date = date('Y-m-d H:i:s');
             $task = $_POST['task'];
             $status = 'Ongoing';
             //insert new task query to database
             $wpdb->query("INSERT INTO $table_name(todo,status,date) VALUES('$task','$status','$date')");
+            //send new data to the laravel end
+            $result = $wpdb->get_row("SELECT * FROM $table_name ORDER BY ID DESC LIMIT 1");
+            $post_data = [
+              'wp_id' =>      $result->id,
+              'base_url' =>   $base_url,
+              'todo' =>       $result->todo,
+              'status' =>     $result->status,
+              'date_added' => $result->date,
+            ];
+            $data_push_to_api = json_encode($post_data);
+            $url = 'https://dashboard.sg-webdesign.net/tasksendnew'; //set api url
+            $arguments = array(
+              'method' => 'POST',
+              'headers' => array(
+                'Content-Type' => 'application/json',
+              ),
+              'sslverify' => false,
+              'body' => $data_push_to_api,
+            );
+            //execute api request
+            $response = wp_remote_post($url, $arguments);
             echo "<script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>";
       }
     }
@@ -50,11 +72,27 @@ function crudAdminPage() {
       }
       else{
         $id = $_POST['id'];
-        date_default_timezone_set('Asia/Singapore');
-        $date = date('Y-m-d H:i:s');
         $task = $_POST['task1'];
         //update task query to database
         $wpdb->query("UPDATE $table_name SET todo='$task' WHERE id='$id'");
+        $result = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$id'");
+        $post_data = [
+          'base_url' =>   $base_url,
+          'todo' =>       $result->todo,
+          'status' =>     $result->status,
+        ];
+        $data_push_to_api = json_encode($post_data);
+        $url = 'https://dashboard.sg-webdesign.net/tasksendupdate/'.$id; //set api url
+        $arguments = array(
+          'method' => 'POST',
+          'headers' => array(
+            'Content-Type' => 'application/json',
+          ),
+          'sslverify' => false,
+          'body' => $data_push_to_api,
+        );
+        //execute api request
+        $response = wp_remote_post($url, $arguments);
         echo "<script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>";
       }
     }
@@ -62,6 +100,21 @@ function crudAdminPage() {
     if (isset($_GET['del'])) {
       $del_id = $_GET['del'];
       //delete task query to database
+        $post_data = [
+          'base_url' =>   $base_url,
+        ];
+        $data_push_to_api = json_encode($post_data);
+        $url = 'https://dashboard.sg-webdesign.net/tasksenddelete/'.$del_id; //set api url
+        $arguments = array(
+          'method' => 'POST',
+          'headers' => array(
+            'Content-Type' => 'application/json',
+          ),
+          'sslverify' => false,
+          'body' => $data_push_to_api,
+        );
+        //execute api request
+      $response = wp_remote_post($url, $arguments);
       $wpdb->query("DELETE FROM $table_name WHERE id='$del_id'");
       echo "<script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>";
     }
@@ -70,6 +123,25 @@ function crudAdminPage() {
       $done_id = $_GET['done'];
       //finish task query to database
       $wpdb->query("UPDATE $table_name SET status='Done' WHERE id='$done_id'");
+      //send update to laravel
+      $result = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$done_id'");
+        $post_data = [
+          'base_url' =>   $base_url,
+          'todo' =>       $result->todo,
+          'status' =>     $result->status,
+        ];
+        $data_push_to_api = json_encode($post_data);
+        $url = 'https://dashboard.sg-webdesign.net/tasksendupdate/'.$done_id; //set api url
+        $arguments = array(
+          'method' => 'POST',
+          'headers' => array(
+            'Content-Type' => 'application/json',
+          ),
+          'sslverify' => false,
+          'body' => $data_push_to_api,
+        );
+        //execute api request
+        $response = wp_remote_post($url, $arguments);
       echo "<script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>";
     }
     //return task
@@ -77,6 +149,25 @@ function crudAdminPage() {
       $return_id = $_GET['return'];
       //return task query to database
       $wpdb->query("UPDATE $table_name SET status='Ongoing' WHERE id='$return_id'");
+      //send update to laravel
+      $result = $wpdb->get_row("SELECT * FROM $table_name WHERE id='$return_id'");
+        $post_data = [
+          'base_url' =>   $base_url,
+          'todo' =>       $result->todo,
+          'status' =>     $result->status,
+        ];
+        $data_push_to_api = json_encode($post_data);
+        $url = 'https://dashboard.sg-webdesign.net/tasksendupdate/'.$return_id; //set api url
+        $arguments = array(
+          'method' => 'POST',
+          'headers' => array(
+            'Content-Type' => 'application/json',
+          ),
+          'sslverify' => false,
+          'body' => $data_push_to_api,
+        );
+        //execute api request
+        $response = wp_remote_post($url, $arguments);
       echo "<script>location.replace('admin.php?page=elementor-todolist%2Ftodolist.php');</script>";
     }
   

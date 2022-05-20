@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -123,7 +123,8 @@ function btn_check_click_counter() {
       $user_ip = $_POST['user_ip']; //get user ip from post
       $btn_table = $wpdb->prefix . 'get_btn_count'; //define btn table name
       $posts_table = $wpdb->prefix . 'posts'; //define posts table name
-      $post_link = $wpdb->get_var("SELECT guid FROM $posts_table WHERE ID='$post_id'"); //get post permalink
+      //$post_link = $wpdb->get_var("SELECT guid FROM $posts_table WHERE ID='$post_id'"); //get post permalink
+      $post_link = $_POST['post_link'];
       //check if btn already has record under a user ip
       $existcount = "SELECT * FROM $btn_table 
                                    WHERE btn_id = '$btn_id' AND post_id = '$post_id' AND base_url = '$base_url' AND user_ip = '$user_ip'";
@@ -168,6 +169,9 @@ function btn_click() {
     global $post, $wpdb;
     $user_ip = $_SERVER['REMOTE_ADDR']; //get user up
     $tbl = $wpdb->prefix . 'btn_track_list'; //define btn table 
+    // $base_url = ( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on' ? 'https' : 'http' ) . '://' .  $_SERVER['HTTP_HOST'];
+    // $url = $base_url . $_SERVER["REQUEST_URI"];
+    $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
     $tracked_btn = $wpdb->get_col("SELECT btn_id FROM $tbl WHERE status='Activated'"); //check if activated
     $btn_all = preg_filter('/^/', '#', $tracked_btn); //add # prefix to all records in the array of activated buttons to make them IDs
     $tracked_final = implode(', ', $btn_all); //separate each array item them with commas
@@ -201,6 +205,7 @@ function btn_click() {
                 ajaxurl: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
                 post_id: '<?php echo $post->ID; ?>',
                 user_ip: '<?php echo $user_ip; ?>',
+                post_link: '<?php echo $url ?>' + window.location.hash,
                 btn_id: btnid,
                 };
 

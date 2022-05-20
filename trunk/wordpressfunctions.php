@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo

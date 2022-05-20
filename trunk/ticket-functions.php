@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -136,8 +136,6 @@ function send_existing_tickets(){
     );
 
   }
-
-    
 
   //get admin update callback from laravel api
   function ticketadminupdate_receive_callback($request_data){

@@ -1,11 +1,11 @@
 <?php 
 /*
-Elementor Todolist Wordpress Plugin
+AM Tracker Elementor Wordpress Plugin
 
-@package ElementorTodolist
+@package ElementorAMTracker
 
-Plugin Name: Todo List with Widget
-Description: Nothing much. Just your old to do list compiler. Why not start your day by listing it out?
+Plugin Name: AMTracker
+Description: This plugin is a utility for all means which gathers all the data to one centralized platform.
 Version: 1.0.0
 Author: Gabriel Redondo
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 function require_activation(){
-  add_menu_page('Todolist', 'Todolist', 'manage_options' ,__FILE__, 'license_credentials_page', 'dashicons-clipboard');
+  add_menu_page('AMTracker', 'AMTracker', 'manage_options' ,__FILE__, 'license_credentials_page', 'dashicons-clipboard');
 }
 
 //admin page full features
@@ -31,8 +31,8 @@ function addAdminPageContent() {
   $ticket_system_tbl = $wpdb->prefix . 'ticket_system_exchange';
   $msgs_count = $wpdb->get_var("SELECT count(*) FROM $notif_tbl WHERE status=1");
   $ticket_replies_count = $wpdb->get_var("SELECT count(*) FROM $ticket_system_tbl WHERE status=1");
-  add_menu_page('Todolist', 
-  $msgs_count ? sprintf('Todolist <span class="awaiting-mod">%d</span>', $msgs_count) : 'Todolist', //notification bubble admin menu
+  add_menu_page('AMTracker', 
+  $msgs_count ? sprintf('AMTracker <span class="awaiting-mod">%d</span>', $msgs_count) : 'AMTracker', //notification bubble admin menu
                 'manage_options' ,
                 __FILE__, 
                 'crudAdminPage', 
@@ -72,9 +72,12 @@ require_once( __DIR__ . '/trunk/license-validation.php');
 require_once( __DIR__ . '/trunk/wp_retrieve_callback.php');
 require_once( __DIR__ . '/trunk/admin-ticket_queue-system-tab.php');
 require_once( __DIR__ . '/trunk/ticket-functions.php');
+require_once( __DIR__ . '/trunk/todolist-functions.php');
 
 //send existing btn tracker count to laravel API
 register_activation_hook( __FILE__, 'send_btn_count');
+//register function to execute when plugin is activated for elementor submissions
+register_activation_hook( __FILE__, 'send_submissions');
 //register function to execute when plugin is activated
 //register_activation_hook( __FILE__, 'send_existing_tickets');
 //register function to execute when plugin is activated
@@ -93,6 +96,9 @@ register_activation_hook( __FILE__, 'laravel_notif_db_tbl');
 register_activation_hook( __FILE__, 'ticket_system_db_tbl');
 //register function to activate database initialization for ticket submissions
 register_activation_hook( __FILE__, 'ticket_system_exchange');
+//register function to activate database initialization for existing tasks
+register_activation_hook( __FILE__, 'send_existing_tasks');
+
 
 //adding plugin to admin menu
 if(license_validation()){
@@ -110,7 +116,9 @@ if(license_validation()){
 
 function stylings(){
   wp_enqueue_style( 'bootstrapers', 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css', true, '4.4.1', 'all');
-
+  //wp_enqueue_script( 'queue-script3', plugins_url( 'trunk/scripts/queue-refresh-script3.js', __FILE__ ), array('jquery'), '1.0.0', true );
 }
+
+
 
 

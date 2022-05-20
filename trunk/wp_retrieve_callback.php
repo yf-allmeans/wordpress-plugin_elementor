@@ -1,9 +1,9 @@
 <?php
 /**
- * Elementor_Todolist class.
+ * Elementor_AMtracker class.
  *
  * @category   Class
- * @package    ElementorTodolist
+ * @package    ElementorAMTracker
  * @subpackage WordPress
  * @author     Gabriel Redondo
  * @copyright  2022 Gabriel Redondo
@@ -72,7 +72,6 @@ function custom_admin_notice_popup(){
             <div class="notice notice-success">
                 <p><?php _e('You have a new message ("'.$data->notification.'") from Todolist laravel!', 'elementor-todolist'); 
                 echo '<a style="position:relative; left: 20px;" href="admin.php?page=elementor-todolist%2Ftodolist.php&dismiss-notice='.$data->id.'">Dismiss</a>';
-                //echo '<a style="text-align:right;" href="'.$current_url.'/wp-admin/admin.php?page=elementor-todolist%2Ftodolist.php">View</a>';
             ?></p>
             </div>
             <?php
